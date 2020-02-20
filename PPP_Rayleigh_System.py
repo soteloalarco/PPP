@@ -233,8 +233,10 @@ def simulacionEventosDiscretos(entorno, usuario, simulacion, estacionesbase, ter
                         usuario.ListaUsuariosMoviles.append([simulacion.Llegadas[i].value, 0, des_user_position, False])
 
                         # Verificar SIR
+
                         des_sig = (des_user_r ** (-apd)) * random.expovariate(1)
-                        simulacion.coeficientesCanal.append(des_sig)
+                        #des_sig = 32.4+ 10*apd*mth.log10(des_user_r/1)
+                        simulacion.coeficientesCanal.append(10 * mth.log10(des_sig))
 
                         I_sig = 0
                         for k in range(0, 6):  # Recorremos las 6 celulas interferentes
@@ -390,13 +392,16 @@ estacionesbase = EstacionBase(entorno, 70)
 
 # Creacion de objeto clase Simulación
 simulacion = Simulacion()
-simulacion.umbralArribos = int(sys.argv[2])
+
+#simulacion.umbralArribos = int(sys.argv[2])
 #simulacion.umbralArribos = 500
-#simulacion.umbralArribos = 15000
+simulacion.umbralArribos = 15000
 
 terminarSimulacion = simpy.events.Event(entorno)
 
-cluster_size=int(sys.argv[1])
+#cluster_size=int(sys.argv[1])
+
+cluster_size=7
 apd=4
 
 entorno.process(simulacionEventosDiscretos(entorno, usuario, simulacion, estacionesbase, terminarSimulacion,cluster_size,apd))
@@ -405,3 +410,12 @@ entorno.run(until=terminarSimulacion)
 #simulacion.probabilidad_Outage = (simulacion.contadorBloqueoXSIR[0]) / simulacion.countLlegadas[0]
 #simulacion.probabilidad_rechazo = (simulacion.contadorBloqueoXSIR[0] / simulacion.countLlegadas[0]) + (simulacion.contadorBloqueoXRecurso[0] / (simulacion.countLlegadas[0] - simulacion.contadorBloqueoXSIR[0]))
 print(simulacion.probabilidad_Outage, ",", sum(simulacion.ListaSIR)/len(simulacion.ListaSIR))
+
+plt.figure(1)
+
+y = simulacion.coeficientesCanal
+plt.xlabel('Coeficientes dB')
+plt.title("Condicion del canal con pérdidas de potencia en distancia y Rayleigh con Ncc "+str(cluster_size)+" exponente de pérdida " +str(apd))
+
+plt.hist(y, density=True, bins=150)
+plt.show()

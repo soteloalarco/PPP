@@ -136,9 +136,6 @@ if __name__ == '__main__':
     #a3 = input('Ingresa el número de muestras a generar:    ')
     #simulacion.a = np.linspace(float(a1), float(a2), int(a3))  # (0.01, 22, 100)
     simulacion.a = [1, 3, 4, 7]
-    r=1000
-    areaTotal = np.pi * r ** 2;  # area of disk
-
     inicio = timer()
     print("  Simulando  ...")
     # Multiprocesamiento

@@ -1,6 +1,7 @@
 import numpy as np;  # NumPy package for arrays, random number generation, etc
 import matplotlib.pyplot as plt  # for plotting
 from scipy.stats import poisson
+import random
 
 # Simulation window parameters
 r = 10;  # radius of disk
@@ -9,13 +10,13 @@ yy0 = 0;  # centre of disk
 areaTotal = np.pi * r ** 2;  # area of disk
 
 # Point process parameters
-lambda0 = 1000/areaTotal;  # intensity (ie mean density) of the Poisson process
-rep=1000000
+lambda0 = 20/areaTotal;  # intensity (ie mean density) of the Poisson process
+rep=5000000
 
 numbPointsTotal=[]
 for i in range(1,rep):
     # Simulate Poisson point process
-    numbPoints = np.random.poisson(lambda0 * areaTotal);  # Poisson number of points
+    numbPoints = poisson.rvs(lambda0 * areaTotal);  # Poisson number of points
     theta = 2 * np.pi * np.random.uniform(0, 1, numbPoints);  # angular coordinates
     rho = r * np.sqrt(np.random.uniform(0, 1, numbPoints));  # radial coordinates
 
@@ -36,7 +37,7 @@ for i in range(1,rep):
     #plt.axis('equal');
     #plt.show()
 
-mu =  1000 # parametro de forma
+mu =  20 # parametro de forma
 poisson = poisson(mu) # Distribución
 x = np.arange(poisson.ppf(0.01),
               poisson.ppf(0.99))
@@ -45,5 +46,5 @@ plt.plot(x, fmp, '--')
 plt.title('Distribución Poisson')
 plt.ylabel('probabilidad')
 plt.xlabel('valores')
-plt.hist(numbPointsTotal, density=True, bins=150)
+plt.hist(numbPointsTotal, density=True, bins=40)
 plt.show()

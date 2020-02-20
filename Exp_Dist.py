@@ -27,7 +27,7 @@ x = np.linspace(exponencial.ppf(0.01),
                 exponencial.ppf(0.99), 100)
 fp = exponencial.pdf(x) # Función de Probabilidad
 plt.plot(x, fp)
-plt.title('Distribución Exponencial')
+plt.title('Distribución Exponencial representando ganancia Rayleigh en potencia')
 plt.ylabel('probabilidad')
 plt.xlabel('valores')
 plt.hist(numbPointsTotal, density=True, bins=150)
