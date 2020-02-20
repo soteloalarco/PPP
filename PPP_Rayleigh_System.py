@@ -234,9 +234,9 @@ def simulacionEventosDiscretos(entorno, usuario, simulacion, estacionesbase, ter
 
                         # Verificar SIR
 
-                        des_sig = (des_user_r ** (-apd)) * random.expovariate(1)
-                        #des_sig = 32.4+ 10*apd*mth.log10(des_user_r/1)
-                        simulacion.coeficientesCanal.append(10 * mth.log10(des_sig))
+                        #des_sig = (des_user_r ** (-apd)) * random.expovariate(1)
+                        des_sig = 32.4+ 10*apd*mth.log10(des_user_r/1000)+20*mth.log10(2000)+10*mth.log10(random.expovariate(1))
+                        simulacion.coeficientesCanal.append(des_sig)
 
                         I_sig = 0
                         for k in range(0, 6):  # Recorremos las 6 celulas interferentes
@@ -402,7 +402,7 @@ terminarSimulacion = simpy.events.Event(entorno)
 #cluster_size=int(sys.argv[1])
 
 cluster_size=7
-apd=4
+apd=2.8
 
 entorno.process(simulacionEventosDiscretos(entorno, usuario, simulacion, estacionesbase, terminarSimulacion,cluster_size,apd))
 entorno.run(until=terminarSimulacion)
