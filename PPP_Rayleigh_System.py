@@ -395,14 +395,14 @@ simulacion = Simulacion()
 
 #simulacion.umbralArribos = int(sys.argv[2])
 #simulacion.umbralArribos = 500
-simulacion.umbralArribos = 15000
+simulacion.umbralArribos = 20000
 
 terminarSimulacion = simpy.events.Event(entorno)
 
 #cluster_size=int(sys.argv[1])
 
 cluster_size=7
-apd=2.8
+apd=4.5
 
 entorno.process(simulacionEventosDiscretos(entorno, usuario, simulacion, estacionesbase, terminarSimulacion,cluster_size,apd))
 entorno.run(until=terminarSimulacion)
@@ -414,8 +414,10 @@ print(simulacion.probabilidad_Outage, ",", sum(simulacion.ListaSIR)/len(simulaci
 plt.figure(1)
 
 y = simulacion.coeficientesCanal
-plt.xlabel('Coeficientes dB')
-plt.title("Condicion del canal con pérdidas de potencia en distancia y Rayleigh con Ncc "+str(cluster_size)+" exponente de pérdida " +str(apd))
+plt.xlabel('Valor de coeficientes [dB]')
+plt.ylabel('Probabilidad')
+plt.title("Coeficientes del canal con pérdidas por trayectorioa y desvanecimiento Rayleigh con un exponente de pérdida = " +str(apd)+ " y frecuencia de 2Ghz")
+
 
 plt.hist(y, density=True, bins=150)
 plt.show()
