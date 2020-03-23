@@ -57,8 +57,16 @@ class Simulacion(object):
     sortedListaUsuariosuRLLC = []
     r_cell = 500
     N0 = -173 #dBm/Hz
+    # Rm : minima tasa de transmision de dispositivo MTC;
+    # Ru : minima tasa de transmision de dispositivo uRLLC;
+    # PmMax : máximo presupuesto de potencia de dispositivo MTC;
+    # PuMax : máximo presupuesto de potencia de dispositivo uRLLC;;
     PuMax = 23 #dBm
-    PmMax = 23 #
+    PmMax = 23
+    Ru = 0
+    Rm = 0
+    Pm = 0
+    Pu = 0
 
 
 def formacionUsuarios(sim, umbral):
@@ -129,32 +137,35 @@ def algoritmoAgrupamiento(sim):
 
     w=0
     x=0
+    #Agregar ceros a lista
+    for g in range(0,j):
+        sim.sortedListaUsuariosmMTC.insert(0, 0)
 
-    for i in range(0, int(sim.M)):
+    for i in range(j, int(sim.M)):
         # Si el número de dispositivos mMTC [M] es mayor que el numero de grupos NOMA [C], los dispositivos sobrantes
         # serán asignados a los siguientes rangos del grupo
         # Ultima posición de asignación
 
-        if i < sim.C:
+        if i < (sim.C):
             # Asignar los dispositivos mmtc a los rangos mas bajos de los primeros grupos
             sim.NOMA_clusters[j][1] = [2, sim.sortedListaUsuariosmMTC[i][0]]
             sim.sortedListaUsuariosmMTC[i][2] = True
             j = j + 1
 
-        elif i < 2*sim.C:
+        elif i < (2*sim.C):
             # Asignar los dispositivos uRLLC a los siguientes rangos del grupo
             sim.NOMA_clusters[w][2] = [2, sim.sortedListaUsuariosmMTC[i][0]]
             sim.sortedListaUsuariosmMTC[i][2] = True
             w = w + 1
 
-        elif i < 3*sim.C:
+        elif i < (3*sim.C):
             # Asignar los dispositivos uRLLC a los siguientes rangos del grupo
             sim.NOMA_clusters[x][3] = [2, sim.sortedListaUsuariosmMTC[i][0]]
             sim.sortedListaUsuariosmMTC[i][2] = True
             x = x + 1
 
         else:
-            print('indice quedó en',i, ' y faltaron ', sim.M, ' usuarios tipo maquina MTC' )
+            print('indice quedó en',i, ' y eran ', sim.M, ' usuarios tipo maquina MTC' )
             break;
 
 
