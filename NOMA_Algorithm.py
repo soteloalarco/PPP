@@ -202,7 +202,7 @@ def algoritmoAsignacionRecursos(sim):
 
     Sv = 0
     Sac = [] #conjunto de subcanales establecidos
-    Cns = sim.C #Conjunto de clusters de dispositivos con tasas insatisfechas
+    Cns = sim.NOMA_clusters.copy() #Conjunto de clusters de dispositivos con tasas insatisfechas
     c_ = 0 #Mejor cluster que maximiza la tasa
 
     #Eliminar ceros que se agregaron a lista
@@ -222,42 +222,24 @@ def algoritmoAsignacionRecursos(sim):
         # URLLC no interfieren a los mMTC por que estos tienen rangos mas altos
 
     sim.Rm = []
-    for m in range(0, len(sim.sortedListaUsuariosmMTC)):
-        if sim.sortedListaUsuariosmMTC[m][4]==True: #Si se ha agrupado el dispositivo
-
-            Interferencias = calculoInterferenciamMTC(m,sim)
-
-            R1 = sim.BW * mth.log2( 1 + ( (( abs( sim.sortedListaUsuariosmMTC[m][1] )**2 ) * ( sim.sortedListaUsuariosmMTC[m][3] )) / ((sim.N0 * sim.BW) + Interferencias ) ) )
-            sim.Rm.append(R1)
-
     sim.Ru = []
-    for u in range(0, len(sim.sortedListaUsuariosuRLLC)):
-        if sim.sortedListaUsuariosuRLLC[u][4]==True: #Si se ha agrupado el dispositivo
-
-            Interferencias = calculoInterferenciauRLLC(u,sim)
-
-            R2 = sim.BW * mth.log2( 1 + ( (( abs( sim.sortedListaUsuariosuRLLC[u][1] )**2 ) * ( sim.sortedListaUsuariosuRLLC[u][3] )) / ((sim.N0 * sim.BW) + Interferencias ) ) )
-            sim.Ru.append(R2)
 
 
-    for ci in range(0,len(sim.NOMA_clusters)):
-        for cn in range(0,len(sim.NOMA_clusters[ci])):
 
-            if sim.NOMA_clusters[ci][cn][0] == 1:
+    for ci in range(0, len(Cns)):
+        for cn in range(0, len(Cns[ci])):
+
+            if Cns[ci][cn][0] == 1:
                 Interferencias = calculoInterferenciauRLLC(u, sim)
 
-                R2 = sim.BW * mth.log2(1 + (
-                            ((abs(sim.sortedListaUsuariosuRLLC[u][1]) ** 2) * (sim.sortedListaUsuariosuRLLC[u][3])) / (
-                                (sim.N0 * sim.BW) + Interferencias)))
+                R2 = sim.BW * mth.log2(1 + (((abs(sim.sortedListaUsuariosuRLLC[u][1]) ** 2) * (sim.sortedListaUsuariosuRLLC[u][3])) / ((sim.N0 * sim.BW) + Interferencias)))
                 sim.Ru.append(R2)
 
             else:
 
                 Interferencias = calculoInterferenciamMTC(m, sim)
 
-                R1 = sim.BW * mth.log2(1 + (
-                            ((abs(sim.sortedListaUsuariosmMTC[m][1]) ** 2) * (sim.sortedListaUsuariosmMTC[m][3])) / (
-                                (sim.N0 * sim.BW) + Interferencias)))
+                R1 = sim.BW * mth.log2(1 + (((abs(sim.sortedListaUsuariosmMTC[m][1]) ** 2) * (sim.sortedListaUsuariosmMTC[m][3])) / ((sim.N0 * sim.BW) + Interferencias)))
                 sim.Rm.append(R1)
 
     #c_ = max()
