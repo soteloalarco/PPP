@@ -239,6 +239,27 @@ def algoritmoAsignacionRecursos(sim):
             R2 = sim.BW * mth.log2( 1 + ( (( abs( sim.sortedListaUsuariosuRLLC[u][1] )**2 ) * ( sim.sortedListaUsuariosuRLLC[u][3] )) / ((sim.N0 * sim.BW) + Interferencias ) ) )
             sim.Ru.append(R2)
 
+
+    for ci in range(0,len(sim.NOMA_clusters)):
+        for cn in range(0,len(sim.NOMA_clusters[ci])):
+
+            if sim.NOMA_clusters[ci][cn][0] == 1:
+                Interferencias = calculoInterferenciauRLLC(u, sim)
+
+                R2 = sim.BW * mth.log2(1 + (
+                            ((abs(sim.sortedListaUsuariosuRLLC[u][1]) ** 2) * (sim.sortedListaUsuariosuRLLC[u][3])) / (
+                                (sim.N0 * sim.BW) + Interferencias)))
+                sim.Ru.append(R2)
+
+            else:
+
+                Interferencias = calculoInterferenciamMTC(m, sim)
+
+                R1 = sim.BW * mth.log2(1 + (
+                            ((abs(sim.sortedListaUsuariosmMTC[m][1]) ** 2) * (sim.sortedListaUsuariosmMTC[m][3])) / (
+                                (sim.N0 * sim.BW) + Interferencias)))
+                sim.Rm.append(R1)
+
     #c_ = max()
 
 
