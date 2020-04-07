@@ -227,24 +227,44 @@ def algoritmoAsignacionRecursos(sim):
 
 
     for ci in range(0, len(Cns)):
-        for cn in range(0, len(Cns[ci])):
+        R=0
+        Rtotal=0
+        for cn in range(0, sim.kmax):
 
             if Cns[ci][cn][0] == 1:
+
+                u1 = Cns[ci][cn][1]
+                u = busquedaDispositivouRLLC(u1,sim)
                 Interferencias = calculoInterferenciauRLLC(u, sim)
 
-                R2 = sim.BW * mth.log2(1 + (((abs(sim.sortedListaUsuariosuRLLC[u][1]) ** 2) * (sim.sortedListaUsuariosuRLLC[u][3])) / ((sim.N0 * sim.BW) + Interferencias)))
-                sim.Ru.append(R2)
-
+                R = sim.BW * mth.log2(1 + (((abs(sim.sortedListaUsuariosuRLLC[u][1]) ** 2) * (sim.sortedListaUsuariosuRLLC[u][3])) / ((sim.N0 * sim.BW) + Interferencias)))
+                Rtotal = Rtotal + R
             else:
+
+                m1 = Cns[ci][cn][1]
+                m = busquedaDispositivomMTC(m1, sim)
 
                 Interferencias = calculoInterferenciamMTC(m, sim)
 
-                R1 = sim.BW * mth.log2(1 + (((abs(sim.sortedListaUsuariosmMTC[m][1]) ** 2) * (sim.sortedListaUsuariosmMTC[m][3])) / ((sim.N0 * sim.BW) + Interferencias)))
-                sim.Rm.append(R1)
-
+                R = sim.BW * mth.log2(1 + (((abs(sim.sortedListaUsuariosmMTC[m][1]) ** 2) * (sim.sortedListaUsuariosmMTC[m][3])) / ((sim.N0 * sim.BW) + Interferencias)))
+                Rtotal = Rtotal + R
+        Cns[ci].append(Rtotal)
     #c_ = max()
 
 
+
+def busquedaDispositivomMTC(m, sim):
+    for i in range(0,len(sim.sortedListaUsuariosmMTC)):
+        if sim.sortedListaUsuariosmMTC[i][0] == m:
+            break
+    return i
+
+
+def busquedaDispositivouRLLC(u, sim):
+    for i in range(0,len(sim.sortedListaUsuariosuRLLC)):
+        if sim.sortedListaUsuariosuRLLC[i][0] == u:
+            break
+    return i
 
 
 
@@ -260,6 +280,7 @@ def calculoInterferenciauRLLC(u,sim):
 
     I = 0
     for i in range(0, len(sim.sortedListaUsuariosmMTC)):
+        #Se puede quitar
         if sim.sortedListaUsuariosmMTC[i][6] >= sim.sortedListaUsuariosuRLLC[u][6]:
             I = (( abs( sim.sortedListaUsuariosmMTC[i][1] )**2 ) * ( sim.sortedListaUsuariosmMTC[i][3] ))
             Int1 = Int1 + I
