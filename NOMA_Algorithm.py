@@ -216,13 +216,11 @@ def algoritmoAsignacionRecursos(sim):
     sim.Rm = 0
     sim.Ru = 0
 
-    while len(sim.Subportadoras) == 48 & sim.Ru < sim.Ruth & sim.Rm < sim.Rmth:
-
-
+    while len(sim.Subportadoras) == 48 & (sim.Ru < sim.Ruth) & (sim.Rm < sim.Rmth):
         #gamma = 0 #variable binaria que indica 1 si el cluster se asgna a subportadora
         #alpha = 0 #variable binaria que asigna mtc al kth rango de los clusters
         #beta= 0 #variable binaria que asigna urllc al kth rango de los clusters
-
+        sim.Rates = []
         #la tasa de transmision alcanzada del dispositivo mtc, Rm
         # URLLC no interfieren a los mMTC por que estos tienen rangos mas altos
         for ci in range(0, len(sim.Cns)):
@@ -263,7 +261,7 @@ def algoritmoAsignacionRecursos(sim):
         #Actualizar potencias de los dispositivos mMTC y uRLLC del grupo NOMA
         actualizarPotencias(c_, sim.Sac, sim)
 
-        if sim.Ru >= sim.Ruth & sim.Rm >= sim.Rmth:
+        if (sim.Ru >= sim.Ruth) & (sim.Rm >= sim.Rmth):
             sim.Cns[c_].clear()
             sim.Subportadoras.append([c_, max(sim.Rates)])
 
@@ -275,7 +273,7 @@ def algoritmoAsignacionRecursos(sim):
         sim.Ru=0
         sim.Rm=0
 
-        if sim.Ru >= sim.Ruth & sim.Rm >= sim.Rmth:
+        if (sim.Ru >= sim.Ruth) & (sim.Rm >= sim.Rmth):
 
             for k in range(0, 48-len(sim.Subportadoras)):
                 sim.Rates = []
@@ -316,6 +314,7 @@ def algoritmoAsignacionRecursos(sim):
 
             # Actualizar potencias de los dispositivos mMTC y uRLLC del grupo NOMA
             actualizarPotencias(c_, sim.Sac, sim)
+
 
 
 
