@@ -213,14 +213,15 @@ def algoritmoAsignacionRecursos(sim):
     sim.Ruth = mth.sqrt(np.random.uniform(.1, 20)) * 1e3
     sim.Rmth = mth.sqrt(np.random.uniform(.1, 2)) * 1e3
 
-    sim.Rm = 0
-    sim.Ru = 0
 
-    while len(sim.Subportadoras) == 48 & (sim.Ru < sim.Ruth) & (sim.Rm < sim.Rmth):
+
+    while (len(sim.Subportadoras) < 48) & (sim.Ru < sim.Ruth) & (sim.Rm < sim.Rmth):
         #gamma = 0 #variable binaria que indica 1 si el cluster se asgna a subportadora
         #alpha = 0 #variable binaria que asigna mtc al kth rango de los clusters
         #beta= 0 #variable binaria que asigna urllc al kth rango de los clusters
         sim.Rates = []
+        sim.Rm = 0
+        sim.Ru = 0
         #la tasa de transmision alcanzada del dispositivo mtc, Rm
         # URLLC no interfieren a los mMTC por que estos tienen rangos mas altos
         for ci in range(0, len(sim.Cns)):
@@ -259,19 +260,21 @@ def algoritmoAsignacionRecursos(sim):
         #Obtener las tasas de los dispositivos mMTC y uRLLC del grupo NOMA
         tasas_de_clusterNOMA(c_, sim)
         #Actualizar potencias de los dispositivos mMTC y uRLLC del grupo NOMA
-        actualizarPotencias(c_, sim.Sac, sim)
+        actualizarPotenciasT(sim)
+        #actualizarPotencias(c_, sim.Sac, sim)
 
         if (sim.Ru >= sim.Ruth) & (sim.Rm >= sim.Rmth):
             sim.Cns[c_].clear()
-            sim.Subportadoras.append([c_, max(sim.Rates)])
+
+        sim.Subportadoras.append([c_, max(sim.Rates)])
 
 
         #Incorporar a gamma en los clusters
         #Colocar identificador T o F para indicar si ya se satisface la tasa
 
-        ########################################################################################################################
-        sim.Ru=0
-        sim.Rm=0
+        ################################################################################################################
+        #sim.Ru=0
+        #sim.Rm=0
 
         if (sim.Ru >= sim.Ruth) & (sim.Rm >= sim.Rmth):
 
@@ -313,12 +316,18 @@ def algoritmoAsignacionRecursos(sim):
                 sim.Sac = sim.Sac + 1
 
             # Actualizar potencias de los dispositivos mMTC y uRLLC del grupo NOMA
-            actualizarPotencias(c_, sim.Sac, sim)
+            actualizarPotenciasT(sim)
 
 
             #CHECAR QUE ES UN CANAL Y SUBCANAL O SUBPORTADORA
 
 
+def actualizarPotenciasT(sim):
+    for i in range (0,len(sim.sortedListaUsuariosuRLLC)):
+        sim.sortedListaUsuariosuRLLC[i][3] = sim.sortedListaUsuariosuRLLC[i][3] / (sim.Sac + 1)
+
+    for i in range (0,len(sim.sortedListaUsuariosmMTC)):
+        sim.sortedListaUsuariosmMTC[i][3] = sim.sortedListaUsuariosmMTC[i][3] / (sim.Sac + 1)
 
 
 def actualizarPotencias(cluster, Sac, sim):
