@@ -269,7 +269,7 @@ def algoritmoAsignacionRecursos(sim):
         #Incorporar a gamma en los clusters
         #Colocar identificador T o F para indicar si ya se satisface la tasa
 
-        ####################################################################################
+        ########################################################################################################################
         sim.Ru=0
         sim.Rm=0
 
@@ -314,6 +314,9 @@ def algoritmoAsignacionRecursos(sim):
 
             # Actualizar potencias de los dispositivos mMTC y uRLLC del grupo NOMA
             actualizarPotencias(c_, sim.Sac, sim)
+
+
+            #CHECAR QUE ES UN CANAL Y SUBCANAL O SUBPORTADORA
 
 
 
