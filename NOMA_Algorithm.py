@@ -215,20 +215,23 @@ def algoritmoAsignacionRecursos(sim):
 
 
 
-    while ((len(sim.Subportadoras) < 48) and (sim.Ru < sim.Ruth) and (sim.Rm < sim.Rmth)):
+    while True:
+
+        if((len(sim.Subportadoras) == 48) and (sim.Ru >= sim.Ruth) and (sim.Rm >= sim.Rmth)):
+            break
         #gamma = 0 #variable binaria que indica 1 si el cluster se asgna a subportadora
         #alpha = 0 #variable binaria que asigna mtc al kth rango de los clusters
         #beta= 0 #variable binaria que asigna urllc al kth rango de los clusters
-        sim.Rates = []
+
         sim.Rm = 0
         sim.Ru = 0
         #la tasa de transmision alcanzada del dispositivo mtc, Rm
         # URLLC no interfieren a los mMTC por que estos tienen rangos mas altos
         for ci in range(0, len(sim.Cns)):
-
+            sim.Rates = []
             Rtotal=0
             for cn in range(0, sim.kmax):
-                if sim.Cns[ci] != []:
+                if sim.Cns[ci]:
                     R = 0
                     if sim.Cns[ci][cn][0] == 1:
 
@@ -267,7 +270,6 @@ def algoritmoAsignacionRecursos(sim):
             sim.Cns[c_].clear()
 
         sim.Subportadoras.append([c_, max(sim.Rates)])
-
 
         #Incorporar a gamma en los clusters
         #Colocar identificador T o F para indicar si ya se satisface la tasa
