@@ -215,7 +215,7 @@ def algoritmoAsignacionRecursos(sim):
 
 
 
-    while (len(sim.Subportadoras) < 48) & (sim.Ru < sim.Ruth) & (sim.Rm < sim.Rmth):
+    while (len(sim.Subportadoras) < 48) and (sim.Ru < sim.Ruth) and (sim.Rm < sim.Rmth):
         #gamma = 0 #variable binaria que indica 1 si el cluster se asgna a subportadora
         #alpha = 0 #variable binaria que asigna mtc al kth rango de los clusters
         #beta= 0 #variable binaria que asigna urllc al kth rango de los clusters
@@ -263,7 +263,7 @@ def algoritmoAsignacionRecursos(sim):
         actualizarPotenciasT(sim)
         #actualizarPotencias(c_, sim.Sac, sim)
 
-        if (sim.Ru >= sim.Ruth) & (sim.Rm >= sim.Rmth):
+        if (sim.Ru >= sim.Ruth) and (sim.Rm >= sim.Rmth):
             sim.Cns[c_].clear()
 
         sim.Subportadoras.append([c_, max(sim.Rates)])
@@ -276,47 +276,47 @@ def algoritmoAsignacionRecursos(sim):
         #sim.Ru=0
         #sim.Rm=0
 
-        if (sim.Ru >= sim.Ruth) & (sim.Rm >= sim.Rmth):
-
-            for k in range(0, 48-len(sim.Subportadoras)):
-                sim.Rates = []
-                for ci in range(0, len(sim.Cns)-len(sim.Subportadoras)):
-
-                    Rtotal = 0
-                    for cn in range(0, sim.kmax):
-                        if sim.Cns[ci] != []:
-                            R = 0
-                            if sim.Cns[ci][cn][0] == 1:
-
-                                u1 = sim.Cns[ci][cn][1]
-                                u = busquedaDispositivouRLLC(u1, sim)
-                                Interferencias = calculoInterferenciauRLLC(u, sim)
-
-                                R = sim.BW * mth.log2(1 + (((abs(sim.sortedListaUsuariosuRLLC[u][1]) ** 2) * (
-                                sim.sortedListaUsuariosuRLLC[u][3])) / ((sim.N0 * sim.BW) + Interferencias)))
-                                sim.sortedListaUsuariosuRLLC[u][2] = R
-
-                            elif sim.Cns[ci][cn][0] == 2:
-
-                                m1 = sim.Cns[ci][cn][1]
-                                m = busquedaDispositivomMTC(m1, sim)
-
-                                Interferencias = calculoInterferenciamMTC(m, sim)
-
-                                R = sim.BW * mth.log2(1 + (((abs(sim.sortedListaUsuariosmMTC[m][1]) ** 2) * (
-                                sim.sortedListaUsuariosmMTC[m][3])) / ((sim.N0 * sim.BW) + Interferencias)))
-                                sim.sortedListaUsuariosmMTC[m][2] = R
-
-                            Rtotal = Rtotal + R
-                    sim.Rates.append([Rtotal])
-
-                c_ = sim.Rates.index(max(sim.Rates))
-                sim.Subportadoras.append([c_, max(sim.Rates)])
-                # Actualizar variables
-                sim.Sac = sim.Sac + 1
-
-            # Actualizar potencias de los dispositivos mMTC y uRLLC del grupo NOMA
-            actualizarPotenciasT(sim)
+#        if (sim.Ru >= sim.Ruth) and (sim.Rm >= sim.Rmth):
+#
+#            for k in range(0, 48-len(sim.Subportadoras)):
+#                sim.Rates = []
+#                for ci in range(0, len(sim.Cns)-len(sim.Subportadoras)):
+#
+#                    Rtotal = 0
+#                    for cn in range(0, sim.kmax):
+#                        if sim.Cns[ci] != []:
+#                            R = 0
+#                            if sim.Cns[ci][cn][0] == 1:
+#
+#                                u1 = sim.Cns[ci][cn][1]
+#                                u = busquedaDispositivouRLLC(u1, sim)
+#                                Interferencias = calculoInterferenciauRLLC(u, sim)
+#
+#                                R = sim.BW * mth.log2(1 + (((abs(sim.sortedListaUsuariosuRLLC[u][1]) ** 2) * (
+#                                sim.sortedListaUsuariosuRLLC[u][3])) / ((sim.N0 * sim.BW) + Interferencias)))
+#                                sim.sortedListaUsuariosuRLLC[u][2] = R
+#
+#                            elif sim.Cns[ci][cn][0] == 2:
+#
+#                                m1 = sim.Cns[ci][cn][1]
+#                                m = busquedaDispositivomMTC(m1, sim)
+#
+#                                Interferencias = calculoInterferenciamMTC(m, sim)
+#
+#                                R = sim.BW * mth.log2(1 + (((abs(sim.sortedListaUsuariosmMTC[m][1]) ** 2) * (
+#                                sim.sortedListaUsuariosmMTC[m][3])) / ((sim.N0 * sim.BW) + Interferencias)))
+#                                sim.sortedListaUsuariosmMTC[m][2] = R
+#
+#                            Rtotal = Rtotal + R
+#                    sim.Rates.append([Rtotal])
+#
+#                c_ = sim.Rates.index(max(sim.Rates))
+#                sim.Subportadoras.append([c_, max(sim.Rates)])
+#                # Actualizar variables
+#                sim.Sac = sim.Sac + 1
+#
+#            # Actualizar potencias de los dispositivos mMTC y uRLLC del grupo NOMA
+#            actualizarPotenciasT(sim)
 
 
             #CHECAR QUE ES UN CANAL Y SUBCANAL O SUBPORTADORA
