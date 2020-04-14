@@ -215,7 +215,7 @@ def algoritmoAsignacionRecursos(sim):
 
 
 
-    while (len(sim.Subportadoras) < 48) and (sim.Ru < sim.Ruth) and (sim.Rm < sim.Rmth):
+    while ((len(sim.Subportadoras) < 48) and (sim.Ru < sim.Ruth) and (sim.Rm < sim.Rmth)):
         #gamma = 0 #variable binaria que indica 1 si el cluster se asgna a subportadora
         #alpha = 0 #variable binaria que asigna mtc al kth rango de los clusters
         #beta= 0 #variable binaria que asigna urllc al kth rango de los clusters
@@ -320,6 +320,8 @@ def algoritmoAsignacionRecursos(sim):
 
 
             #CHECAR QUE ES UN CANAL Y SUBCANAL O SUBPORTADORA
+
+
 
 
 def actualizarPotenciasT(sim):
