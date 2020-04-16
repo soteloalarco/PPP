@@ -223,12 +223,12 @@ def algoritmoAsignacionRecursos(sim):
         #alpha = 0 #variable binaria que asigna mtc al kth rango de los clusters
         #beta= 0 #variable binaria que asigna urllc al kth rango de los clusters
 
-        sim.Rm = 0
-        sim.Ru = 0
+        #sim.Rm = 0
+        #sim.Ru = 0
+        sim.Rates = []
         #la tasa de transmision alcanzada del dispositivo mtc, Rm
         # URLLC no interfieren a los mMTC por que estos tienen rangos mas altos
         for ci in range(0, len(sim.Cns)):
-            sim.Rates = []
             Rtotal=0
             for cn in range(0, sim.kmax):
                 if sim.Cns[ci]:
@@ -255,7 +255,6 @@ def algoritmoAsignacionRecursos(sim):
                     Rtotal = Rtotal + R
             sim.Rates.append([Rtotal])
 
-
         c_ = sim.Rates.index(max(sim.Rates))
         # Actualizar variables
         sim.Sac = sim.Sac + 1
@@ -263,13 +262,15 @@ def algoritmoAsignacionRecursos(sim):
         #Obtener las tasas de los dispositivos mMTC y uRLLC del grupo NOMA
         tasas_de_clusterNOMA(c_, sim)
         #Actualizar potencias de los dispositivos mMTC y uRLLC del grupo NOMA
-        actualizarPotenciasT(sim)
-        #actualizarPotencias(c_, sim.Sac, sim)
+        #actualizarPotenciasT(sim)
+        actualizarPotencias(c_, sim.Sac, sim)
 
         if (sim.Ru >= sim.Ruth) and (sim.Rm >= sim.Rmth):
             sim.Cns[c_].clear()
+            sim.Subportadoras.append([c_, max(sim.Rates)])
 
-        sim.Subportadoras.append([c_, max(sim.Rates)])
+        #if sim.Sac==5:
+        #    break
 
         #Incorporar a gamma en los clusters
         #Colocar identificador T o F para indicar si ya se satisface la tasa
@@ -335,8 +336,7 @@ def actualizarPotenciasT(sim):
 
 
 def actualizarPotencias(cluster, Sac, sim):
-    R1 = 0
-    R2 = 0
+
     for i in range (0, sim.kmax):
         if sim.Cns[cluster][i][0] == 1:
             a = busquedaDispositivouRLLC(sim.Cns[cluster][i][1], sim)
@@ -348,8 +348,7 @@ def actualizarPotencias(cluster, Sac, sim):
 
 
 def tasas_de_clusterNOMA(cluster, sim):
-    R1 = 0
-    R2 = 0
+
     for i in range (0, sim.kmax):
         if sim.Cns[cluster][i][0] == 1:
             a = busquedaDispositivouRLLC(sim.Cns[cluster][i][1], sim)
