@@ -279,7 +279,6 @@ def algoritmoAsignacionRecursos(sim):
             sim.Cns[c_].clear()
 
         sim.Subportadoras.append([c_, max(sim.Rates)])
-        PROPON TU ALGORITMO
 
         #Incorporar a gamma en los clusters
         #Colocar identificador T o F para indicar si ya se satisface la tasa
