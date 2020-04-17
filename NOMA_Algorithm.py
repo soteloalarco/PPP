@@ -74,7 +74,7 @@ class Simulacion(object):
     Cns = []
     Rates = []
     Sv = 0
-    Sac = 0  # conjunto de subcanales establecidos
+    Sac = []  # conjunto de subcanales establecidos
 
 def formacionUsuarios(sim, umbral):
     sim.U = umbral / 4
@@ -265,6 +265,8 @@ def algoritmoAsignacionRecursos(sim):
         c_ = sim.Rates.index(max(sim.Rates))
         # Actualizar variables
         sim.Cns[c_][sim.kmax] = sim.Cns[c_][sim.kmax] + 1
+        sim.Sac.append(c_)
+
         #sim.Sac = sim.Sac + 1
         sim.Sv = sim.Sv + 1
         #Obtener las tasas de los dispositivos mMTC y uRLLC del grupo NOMA
@@ -277,7 +279,7 @@ def algoritmoAsignacionRecursos(sim):
             sim.Cns[c_].clear()
 
         sim.Subportadoras.append([c_, max(sim.Rates)])
-
+        PROPON TU ALGORITMO
 
         #Incorporar a gamma en los clusters
         #Colocar identificador T o F para indicar si ya se satisface la tasa
@@ -286,47 +288,47 @@ def algoritmoAsignacionRecursos(sim):
         #sim.Ru=0
         #sim.Rm=0
 
-        if (sim.Ru >= sim.Ruth) and (sim.Rm >= sim.Rmth):
-            for ci in range(0, len(sim.Cns)):
-                Rtotal = 0
-                if sim.Cns[ci]:
-                    for cn in range(0, sim.kmax):
-                        R = 0
-                        if sim.Cns[ci][cn][0] == 1:
-
-                            u1 = sim.Cns[ci][cn][1]
-                            u = busquedaDispositivouRLLC(u1, sim)
-
-                            Interferencias = calculoInterferenciauRLLC(u, sim)
-
-                            R = sim.BW * mth.log2(1 + (((abs(sim.sortedListaUsuariosuRLLC[u][1]) ** 2) * (
-                            sim.sortedListaUsuariosuRLLC[u][3])) / ((sim.N0 * sim.BW) + Interferencias)))
-                            sim.sortedListaUsuariosuRLLC[u][2] = R
-
-                        elif sim.Cns[ci][cn][0] == 2:
-
-                            m1 = sim.Cns[ci][cn][1]
-                            m = busquedaDispositivomMTC(m1, sim)
-
-                            Interferencias = calculoInterferenciamMTC(m, sim)
-
-                            R = sim.BW * mth.log2(1 + (((abs(sim.sortedListaUsuariosmMTC[m][1]) ** 2) * (
-                            sim.sortedListaUsuariosmMTC[m][3])) / ((sim.N0 * sim.BW) + Interferencias)))
-                            sim.sortedListaUsuariosmMTC[m][2] = R
-
-                        Rtotal = Rtotal + R
-                sim.Rates.append([Rtotal])
-
-            c_ = sim.Rates.index(max(sim.Rates))
-            # Actualizar variables
-            sim.Cns[c_][sim.kmax] = sim.Cns[c_][sim.kmax] + 1
-            # sim.Sac = sim.Sac + 1
-            sim.Sv = sim.Sv + 1
-            # Obtener las tasas de los dispositivos mMTC y uRLLC del grupo NOMA
-            tasas_de_clusterNOMA(c_, sim)
-            # Actualizar potencias de los dispositivos mMTC y uRLLC del grupo NOMA
-            # actualizarPotenciasT(sim)
-            actualizarPotencias(c_, sim.Cns[c_][sim.kmax], sim)
+#        if (sim.Ru >= sim.Ruth) and (sim.Rm >= sim.Rmth):
+#            for ci in range(0, len(sim.Cns)):
+#                Rtotal = 0
+#                if sim.Cns[ci]:
+#                    for cn in range(0, sim.kmax):
+#                        R = 0
+#                        if sim.Cns[ci][cn][0] == 1:
+#
+#                            u1 = sim.Cns[ci][cn][1]
+#                            u = busquedaDispositivouRLLC(u1, sim)
+#
+#                            Interferencias = calculoInterferenciauRLLC(u, sim)
+#
+#                            R = sim.BW * mth.log2(1 + (((abs(sim.sortedListaUsuariosuRLLC[u][1]) ** 2) * (
+#                            sim.sortedListaUsuariosuRLLC[u][3])) / ((sim.N0 * sim.BW) + Interferencias)))
+#                            sim.sortedListaUsuariosuRLLC[u][2] = R
+#
+#                        elif sim.Cns[ci][cn][0] == 2:
+#
+#                            m1 = sim.Cns[ci][cn][1]
+#                            m = busquedaDispositivomMTC(m1, sim)
+#
+#                            Interferencias = calculoInterferenciamMTC(m, sim)
+#
+#                            R = sim.BW * mth.log2(1 + (((abs(sim.sortedListaUsuariosmMTC[m][1]) ** 2) * (
+#                            sim.sortedListaUsuariosmMTC[m][3])) / ((sim.N0 * sim.BW) + Interferencias)))
+#                            sim.sortedListaUsuariosmMTC[m][2] = R
+#
+#                        Rtotal = Rtotal + R
+#                sim.Rates.append([Rtotal])
+#
+#            c_ = sim.Rates.index(max(sim.Rates))
+#            # Actualizar variables
+#            sim.Cns[c_][sim.kmax] = sim.Cns[c_][sim.kmax] + 1
+#            # sim.Sac = sim.Sac + 1
+#            sim.Sv = sim.Sv + 1
+#            # Obtener las tasas de los dispositivos mMTC y uRLLC del grupo NOMA
+#            tasas_de_clusterNOMA(c_, sim)
+#            # Actualizar potencias de los dispositivos mMTC y uRLLC del grupo NOMA
+#            # actualizarPotenciasT(sim)
+#            actualizarPotencias(c_, sim.Cns[c_][sim.kmax], sim)
 
 
 
