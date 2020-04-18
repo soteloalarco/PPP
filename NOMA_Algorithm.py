@@ -286,63 +286,55 @@ def algoritmoAsignacionRecursos(sim):
 
         if (sim.Ru >= sim.Ruth) and (sim.Rm >= sim.Rmth):
             sim.Cns[c_].clear()
-
-
-        #sim.Subportadoras.append([c_, max(sim.Rates)])
-
-        #Incorporar a gamma en los clusters
-        #Colocar identificador T o F para indicar si ya se satisface la tasa
+            sim.Subportadoras.append([c_, max(sim.Rates)])
 
         ################################################################################################################
-        #sim.Ru=0
-        #sim.Rm=0
 
-        for ci in range(0, len(sim.Cns)):
-            Rtotal = 0
-            if sim.Cns[ci]:
-                for cn in range(0, sim.kmax):
-                    R = 0
-                    if sim.Cns[ci][cn][0] == 1:
+        if (sim.Ru >= sim.Ruth) and (sim.Rm >= sim.Rmth):
 
-                        u1 = sim.Cns[ci][cn][1]
-                        u = busquedaDispositivouRLLC(u1, sim)
+            for k in range(len(sim.Subportadoras), sim.S):
+                sim.Rates = []
 
-                        if sim.Cns[ci][sim.kmax] == 1:
-                            Interferencias = calculoInterferenciauRLLC(u, sim)
-                        else:
-                            Interferencias = 0
+                for ci in range(0, len(sim.Cns)):
+                    Rtotal = 0
+                    if sim.Cns[ci]:
+                        for cn in range(0, sim.kmax):
+                            R = 0
+                            if sim.Cns[ci][cn][0] == 1:
 
-                        R = sim.Cns[ci][sim.kmax] * sim.BW * mth.log2(1 + (((abs(
-                            sim.sortedListaUsuariosuRLLC[u][1]) ** 2) * (sim.sortedListaUsuariosuRLLC[u][3])) / ((sim.N0 * sim.BW) + Interferencias)))
-                        sim.sortedListaUsuariosuRLLC[u][2] = R
+                                u1 = sim.Cns[ci][cn][1]
+                                u = busquedaDispositivouRLLC(u1, sim)
 
-                    elif sim.Cns[ci][cn][0] == 2:
+                                if sim.Cns[ci][sim.kmax] == 1:
+                                    Interferencias = calculoInterferenciauRLLC(u, sim)
+                                else:
+                                    Interferencias = 0
 
-                        m1 = sim.Cns[ci][cn][1]
-                        m = busquedaDispositivomMTC(m1, sim)
+                                R = sim.Cns[ci][sim.kmax] * sim.BW * mth.log2(1 + (((abs(
+                                    sim.sortedListaUsuariosuRLLC[u][1]) ** 2) * (sim.sortedListaUsuariosuRLLC[u][
+                                    3])) / ((sim.N0 * sim.BW) + Interferencias)))
+                                sim.sortedListaUsuariosuRLLC[u][2] = R
 
-                        if sim.Cns[ci][sim.kmax] == 1:
-                            Interferencias = calculoInterferenciamMTC(m, sim)
-                        else:
-                            Interferencias = 0
+                            elif sim.Cns[ci][cn][0] == 2:
 
-                        R = sim.Cns[ci][sim.kmax] * sim.BW * mth.log2(1 + (((abs(
-                            sim.sortedListaUsuariosmMTC[m][1]) ** 2) * (sim.sortedListaUsuariosmMTC[m][3])) / ((sim.N0 * sim.BW) + Interferencias)))
-                        sim.sortedListaUsuariosmMTC[m][2] = R
+                                m1 = sim.Cns[ci][cn][1]
+                                m = busquedaDispositivomMTC(m1, sim)
 
-                    Rtotal = Rtotal + R
-            sim.Rates.append([Rtotal])
+                                if sim.Cns[ci][sim.kmax] == 1:
+                                    Interferencias = calculoInterferenciamMTC(m, sim)
+                                else:
+                                    Interferencias = 0
 
-        c_ = sim.Rates.index(max(sim.Rates))
-        # Actualizar variables
-        sim.Cns[c_][sim.kmax] = 1
+                                R = sim.Cns[ci][sim.kmax] * sim.BW * mth.log2(1 + (((abs(
+                                    sim.sortedListaUsuariosmMTC[m][1]) ** 2) * (sim.sortedListaUsuariosmMTC[m][3])) / ((
+                                                                                                                                   sim.N0 * sim.BW) + Interferencias)))
+                                sim.sortedListaUsuariosmMTC[m][2] = R
 
-        sim.Sac[c_].append(max(sim.Rates))
-
-        # sim.Sac = sim.Sac + 1
-        sim.Sv = sim.Sv + 1
-
-        actualizarPotencias(c_, len(sim.Sac[c_]), sim)
+                            Rtotal = Rtotal + R
+                sim.Rates.append([Rtotal])
+                # sim.Sac = sim.Sac + 1
+                sim.Sv = sim.Sv + 1
+                actualizarPotencias(c_, len(sim.Sac[c_]), sim)
 
 
 
