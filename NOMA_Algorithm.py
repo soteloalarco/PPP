@@ -1,10 +1,11 @@
 import sys
-import numpy as np
-import math as mth
 import simpy
 import cmath as cmth
 import matplotlib.pyplot as plt
 from matplotlib.patches import RegularPolygon # Librería para dibujar los hexagonos
+import pandas as pd
+import numpy as np
+import math as mth
 import random
 import operator
 import copy
@@ -12,17 +13,14 @@ import copy
 
 
 class Simulacion(object):
-
     """Esta clase representa a una Simulación de eventos discretos"""
     # DEFINICIÓN DE CONSTANTES, LISTAS Y VARIABLES
-
+    umbralArribos = 0
     # Número de subportadoras, en NBIoT son 48 subportadoras de 3.75Khz
     S = 48
-
     # Lista de frecuencias para subportadoras NB-IoT de banda 1920 MHz
     Subportadoras = list(np.zeros(S))# np.linspace(1920e6, 1920180000, S + 1)
-
-    # Número de clústers/grupos
+    # Número de clústers ó grupos
     C = 48
     # Número de dispositivos por grupo, 2 o 4
     K = 4
@@ -30,28 +28,18 @@ class Simulacion(object):
     U = 0
     # Número de dispositivos tipo mMTC
     M = 0
-
-    # Lista de grupos NOMA
+    # Lista de grupos NOMA: [tipo_dispositivo, ID_dispositivo]
+    # donde tipo_dispositivo =1 URLLC, tipo_dispositivo =2 MTC
     NOMA_clusters = []
-
     # hu: lista de ganancias de dispositivos tipo uRLLC
     hu = []
-    # hu1: lista de ganancias de dispositivos tipo uRLLC
-    hu1 = []
     # hu_sorted: lista de ganancias de dispositivos tipo uRLLC
     hu_sorted = []
-
     # hm: lista de ganancias de dispositivos tipo MTC
     hm = []
-    # hm1: lista de ganancias de dispositivos tipo MTC
-    hm1 = []
     # hm_sorted: lista de ganancias de dispositivos tipo MTC
     hm_sorted = []
-    umbralArribos = 0 # Número de arribos a simular (CONDICIÓN DE PARO)
-    # ListaEstacionesBase = [ID, posicion, contador_UE, [CH0,CH1,CH2,CH3,CH4,CH5,CH6,CH7,CH8,CH9]]
-    #donde CH lista anidada [Tipo, distancia a UE]
-    ListaEstacionesBase = []
-    #Listausuarios=[Id, ganancia canal, Agrupamiento]
+    # Listausuarios = [Id, ganancia_canal, tasa_transmision bps, potencia watts, (variable booleana de asignacion a grupo NOMA), id_grupoNOMA, rango_grupoNOMA, valor sin ocupar]
     ListaUsuariosmMTC=[]
     ListaUsuariosuRLLC=[]
     sortedListaUsuariosmMTC = []
@@ -61,83 +49,82 @@ class Simulacion(object):
     N0 = 5.012e-21 #-173 #dBm/Hz
     BW = 3.75e3
     kmax = 4
-    # Rm : minima tasa de transmision de dispositivo MTC;
-    # Ru : minima tasa de transmision de dispositivo uRLLC;
+    #Tasa a satisfacer por usuarios URLLC
+    Ruth = 0
+    #Tasa a satisfacer por usuarios MTC
+    Rmth = 0
+    # PuMax : máximo presupuesto de potencia de dispositivo uRLLC;
+    PuMax = .2 # 23 dBm
     # PmMax : máximo presupuesto de potencia de dispositivo MTC;
-    # PuMax : máximo presupuesto de potencia de dispositivo uRLLC;;
-    PuMax = .2 #23 dBm
-    PmMax = .2 #23 dBm
-    Ru = 0
-    Rm = 0
+    PmMax = .2 # 23 dBm
     Pm = 0
     Pu = 0
+    # Ru : minima tasa de transmision de dispositivo uRLLC;
+    Ru = 0
+    # Rm : minima tasa de transmision de dispositivo MTC;
+    Rm = 0
+    #Grupos NOMA con tasas insatisfechas
     Cns = []
+    #Tasas alcanzadas por cada grupo NOMA
     Rates = []
-    Sv = 0
-    Sac = [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]  # conjunto de subcanales establecidose
+    #S^ -> S prima que no sé realmente para que se usa
+    Sv = [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]  
+    #Conjunto de subportadoras establecidos
+    Sac = [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]  
+    #gamma = 0 #variable binaria que indica 1 si el cluster se asigna a subportadora
+    #alpha = 0 #variable binaria que asigna mtc al rango unesimo de los clusters
+    #beta = 0 #variable binaria que asigna urllc al rango unesimo de los clusters
 
-def formacionUsuarios(sim, umbral):
-    sim.U = umbral / 4
-    sim.M = umbral - (umbral / 4)
-
+def formacionUsuarios(sim):
+    # Division de usuarios entre U y M
+    sim.U = sim.umbralArribos / 4
+    sim.M = sim.umbralArribos - (sim.umbralArribos / 4)
+    
+    # Usuarios uniformemente distribuidos dentro de la celda entre .1 a 500m
     for i in range (0, int(sim.U)):
-        # Usuarios uniformemente distribuidos dentro de la celda entre .1 a 500m
         d = mth.sqrt(np.random.uniform(0, 1) * (sim.r_cell ** 2))
         ple = 3
         rayleighGain = random.expovariate(1)
         h = ( d ** (-ple) ) * rayleighGain
+        # Listausuarios = [Id, ganancia_canal, tasa_transmision bps, potencia watts, (variable booleana de asignacion a grupo NOMA), id_grupoNOMA, rango_grupoNOMA, valor sin ocupar]
         sim.ListaUsuariosuRLLC.append([i, h, 0, .2, False, 0, 0, 0])
 
     for j in range (int(sim.U), int(sim.U + sim.M)):
-        # Usuarios uniformemente distribuidos dentro de la celda entre .1 a 500m
         d = mth.sqrt(np.random.uniform(0, 1) * (sim.r_cell ** 2))
         ple = 3
         rayleighGain = random.expovariate(1)
         h = ( d ** (-ple) ) * rayleighGain
+        # Listausuarios = [Id, ganancia_canal, tasa_transmision bps, potencia watts, (variable booleana de asignacion a grupo NOMA), id_grupoNOMA, rango_grupoNOMA, valor sin ocupar]
         sim.ListaUsuariosmMTC.append([j, h, 0, .2, False, 0, 0, 0])
 
-    # Agrupamiento de dispositivos MTC
-    # Clasificación de dispositivos basada en su ganancia de canal promedio (descendentemente)
-    # PROMEDIO DE GANANCIAS DE CANAL
-    listaordenada = sorted(sim.ListaUsuariosmMTC, key=operator.itemgetter(1), reverse=True)
-    sim.sortedListaUsuariosmMTC = listaordenada
-    #Agrupamiento de dispositivos uRLLC
-    # Clasificación de dispositivos basada en su ganancia de canal promedio (descendentemente)
-    # PROMEDIO DE GANANCIAS DE CANAL
-    # hu2 = 0
-    # for j in range(0, len(S)):
-    #    #Ir calculando la ganancia del canal para cada subportadora
-    #    #hu = coficientes de canal para usuario u, u aún se debe definir
-    #    hu2 = hu2 + hu[j]/S
-    # hu1.append(hu2)
-
-    # hu_sorted = hu1.sort(reverse = True)
-    listaordenada2 = sorted(sim.ListaUsuariosuRLLC, key=operator.itemgetter(1), reverse=True)
-    sim.sortedListaUsuariosuRLLC = listaordenada2
-
-
+    # Ordenamiento de dispositivos basada en su ganancia de canal promedio(descendentemente)
+    sim.sortedListaUsuariosmMTC = sorted(sim.ListaUsuariosmMTC, key=operator.itemgetter(1), reverse=True)
+    sim.sortedListaUsuariosuRLLC = sorted(sim.ListaUsuariosuRLLC, key=operator.itemgetter(1), reverse=True)
 
 
 # Algoritmo para el agrupamiento de dispositivos (clustering NOMA)
 
 # Se empiezan a agrupar usuarios con una alta ganancia de canal promedio,
 # en la recepción tipo SIC se decodifican primero los usuarios con una alta ganancia de canal promedio antes que los de baja ganancia  de canal promedio
-# Los rangos de los dispositivos uRLLC deben ser menores que los MTC para que sea eficiente la decodificación SIC
-# PREGUNTA: La ganancia de canal considera las pérdidas por la distancia o solo al desvanecimiento
+# es por esto que los rangos de los dispositivos uRLLC deben ser menores que los MTC para que sea eficiente la decodificación SIC
+
 def algoritmoAgrupamiento(sim):
+    # j es la última posición de asignación de usuarios URLLC
     j = 0
+    #AGRUPAMIENTO DE USUARIOS URLLC
+    #Solo para grupos de 4 usuarios
     for i in range(0, int(sim.U)):
-        # Si el número de dispositivos uRLLC [U] es mayor que el numero de grupos NOMA [C], los dispositivos sobrantes
-        # serán asignados a los siguientes rangos del grupo
+        #i corresponde al número de dispositivos uRLLC [U]
         if i < sim.C:
             # Asignar los dispositivos uRLLC a rangos bajos de los primeros grupos
-            sim.NOMA_clusters.append([[1, sim.sortedListaUsuariosuRLLC[i][0]], False, False, False])
+            # Lista de grupos NOMA: [tipo_dispositivo, ID_dispositivo]
+            # donde tipo_dispositivo =1 URLLC, tipo_dispositivo =2 MTC
+            sim.NOMA_clusters.append([1, sim.sortedListaUsuariosuRLLC[i][0]])
             sim.sortedListaUsuariosuRLLC[i][5] = i
             sim.sortedListaUsuariosuRLLC[i][6] = 0
             sim.sortedListaUsuariosuRLLC[i][4] = True
-            # Se debe disminuir U
-            # Quitar a h de la lista
-
+        # Si el número de dispositivos uRLLC [U] es mayor que el numero de grupos NOMA [C], los dispositivos sobrantes
+        # serán asignados a los siguientes rangos del grupo
         else:
             # Asignar los dispositivos uRLLC a los siguientes rangos del grupo
             sim.NOMA_clusters[j][1] = [1, sim.sortedListaUsuariosuRLLC[i][0]]
@@ -146,19 +133,17 @@ def algoritmoAgrupamiento(sim):
             sim.sortedListaUsuariosuRLLC[i][4] = True
             j = j + 1
 
-    print('indice j quedó en', j)
+    #print('Indice j quedó en', j)
     sim.cerosEliminar = j
-    #Ultima posición de asignación
     #sim.NOMA_clusters[j][1]
 
     w=0
     x=0
     #Agregar ceros a lista
-    for g in range(0,j):
+    for g in range(0, j):
         sim.sortedListaUsuariosmMTC.insert(0, 0)
 
-    #HACERLO CON FORS y KMAX dado
-
+    #AGRUPAMIENTO DE USUARIOS MTC
     for i in range(j, int(sim.M)):
         # Si el número de dispositivos mMTC [M] es mayor que el numero de grupos NOMA [C], los dispositivos sobrantes
         # serán asignados a los siguientes rangos del grupo
@@ -166,6 +151,8 @@ def algoritmoAgrupamiento(sim):
 
         if i < (sim.C):
             # Asignar los dispositivos mmtc a los rangos mas bajos de los primeros grupos
+            # Lista de grupos NOMA: [tipo_dispositivo, ID_dispositivo]
+            # donde tipo_dispositivo =1 URLLC, tipo_dispositivo =2 MTC
             sim.NOMA_clusters[j][1] = [2, sim.sortedListaUsuariosmMTC[i][0]]
             sim.sortedListaUsuariosmMTC[i][5] = i
             sim.sortedListaUsuariosmMTC[i][6] = 1
@@ -189,58 +176,46 @@ def algoritmoAgrupamiento(sim):
             x = x + 1
 
         else:
-            print('indice quedó en',i, ' y eran ', sim.M, ' usuarios tipo maquina MTC' )
-            break;
-
-
-########################################################################################################################
+            #print('Se asignaron',i, 'usuarios y eran ', sim.M, ' usuarios tipo maquina MTC' )
+            break
+    #Eliminar ceros que se agregaron a lista
+    del sim.sortedListaUsuariosmMTC[0:sim.cerosEliminar]
 
 
 def algoritmoAsignacionRecursos(sim):
     #Inicialización
+    # Potencias de dispositivos por default se inicializan a su máxima potencia
+    #Suma de tasas acumulada
     sim.Ru = 0
     sim.Rm = 0
-    sim.Pm = sim.PmMax
-    sim.Pu = sim.PuMax
-    sim.sortedListaUsuariosmMTC
-    sim.sortedListaUsuariosuRLLC
-
-
-    sim.Cns = copy.deepcopy(sim.NOMA_clusters) #Conjunto de clusters de dispositivos con tasas insatisfechas
+    # Conjunto de clusters de dispositivos con tasas insatisfechas
+    sim.Cns = copy.deepcopy(sim.NOMA_clusters)
+    # Se agrega una columna a cada cluster para
     for i in range(0, len(sim.Cns)):
         sim.Cns[i].append(0)
-
-    c_ = 0 #Mejor cluster que maximiza la tasa
-
-    #Eliminar ceros que se agregaron a lista
-    del sim.sortedListaUsuariosmMTC[0:sim.cerosEliminar]
-
+    #Mejor cluster que maximiza la tasa (C*)
+    c_ = []
+    #Tasas a satisfacer para dispositivos URLLC y mMTC
     sim.Ruth = mth.sqrt(np.random.uniform(.1, 20)) * 1e3
     sim.Rmth = mth.sqrt(np.random.uniform(.1, 2)) * 1e3
 
-
-
     while True:
+        condicion1 = validacionTasasURLLC(sim)
+        condicion2 = validacionTasasmMTC(sim)
 
-        if((len(sim.Subportadoras) == 48) and (sim.Ru >= sim.Ruth) and (sim.Rm >= sim.Rmth)):
+        if((len(sim.Subportadoras) == 48) and (condicion1) and (condicion2)):
             break
-        if sim.Sv ==3:
-            break
-        #gamma = 0 #variable binaria que indica 1 si el cluster se asgna a subportadora
-        #alpha = 0 #variable binaria que asigna mtc al kth rango de los clusters
-        #beta= 0 #variable binaria que asigna urllc al kth rango de los clusters
-
-        sim.Rm = 0
-        sim.Ru = 0
         sim.Rates = []
-        #la tasa de transmision alcanzada del dispositivo mtc, Rm
-        # URLLC no interfieren a los mMTC por que estos tienen rangos mas altos
+        #For para recorrer los 48 grupos no asignados de Cns
         for ci in range(0, len(sim.Cns)):
+            #RTotal acumula las tasas de cada dispositivo por grupo y asi obtener la tasa alcanzada por grupo
             Rtotal = 0
+            #Validación si es que hay grupos NOMA
             if sim.Cns[ci]:
-
+                # For para recorrer los rangos del grupo
                 for cn in range(0, sim.kmax):
                     R = 0
+                    #Si es tipo URLLC
                     if sim.Cns[ci][cn][0] == 1:
 
                         u1 = sim.Cns[ci][cn][1]
@@ -252,8 +227,10 @@ def algoritmoAsignacionRecursos(sim):
                             Interferencias=0
 
                         R = sim.Cns[ci][sim.kmax] * sim.BW * mth.log2(1 + (((abs(sim.sortedListaUsuariosuRLLC[u][1]) ** 2) * (sim.sortedListaUsuariosuRLLC[u][3])) / ((sim.N0 * sim.BW) + Interferencias)))
+                        #Se asigna la tasa lograda a dispositivo URLLC
                         sim.sortedListaUsuariosuRLLC[u][2] = R
 
+                    #Si es tipo mMTC
                     elif sim.Cns[ci][cn][0] == 2:
 
                         m1 = sim.Cns[ci][cn][1]
@@ -265,12 +242,14 @@ def algoritmoAsignacionRecursos(sim):
                             Interferencias=0
 
                         R = sim.Cns[ci][sim.kmax] * sim.BW * mth.log2(1 + (((abs(sim.sortedListaUsuariosmMTC[m][1]) ** 2) * (sim.sortedListaUsuariosmMTC[m][3])) / ((sim.N0 * sim.BW) + Interferencias)))
+                        #Se asigna la tasa lograda a dispositivo MTC
                         sim.sortedListaUsuariosmMTC[m][2] = R
-
                     Rtotal = Rtotal + R
+            #Rates contiene el compendio de las tasas logradas por grupo
             sim.Rates.append([Rtotal])
-
+        #Se escoge el mejor grupo que maximize la tasa
         c_ = sim.Rates.index(max(sim.Rates))
+
         # Actualizar variables
         sim.Cns[c_][sim.kmax] = 1
 
@@ -280,99 +259,74 @@ def algoritmoAsignacionRecursos(sim):
         sim.Sv = sim.Sv + 1
         #Obtener las tasas de los dispositivos mMTC y uRLLC del grupo NOMA
         tasas_de_clusterNOMA(c_, sim)
-        #Actualizar potencias de los dispositivos mMTC y uRLLC del grupo NOMA
+        #Actualizar potencias todos los dispositivos mMTC y uRLLC del grupo NOMA
         #actualizarPotenciasT(sim)
         actualizarPotencias(c_, len(sim.Sac[c_]), sim)
 
         if (sim.Ru >= sim.Ruth) and (sim.Rm >= sim.Rmth):
+            #Se asigna grupo a Subportadora
             sim.Cns[c_].clear()
             sim.Subportadoras.append([c_, max(sim.Rates)])
 
-        ################################################################################################################
 
-        if (sim.Ru >= sim.Ruth) and (sim.Rm >= sim.Rmth):
+#        ********** SEGUNDA PARTE DEL ALGORITMO, AÚN SIN IMPLEMENTAR **********
+#
+#        if (sim.Ru >= sim.Ruth) and (sim.Rm >= sim.Rmth):
+#
+#            for k in range(len(sim.Subportadoras), sim.S):
+#                sim.Rates = []
+#
+#                for ci in range(0, len(sim.Cns)):
+#                    Rtotal = 0
+#                    if sim.Cns[ci]:
+#                        for cn in range(0, sim.kmax):
+#                            R = 0
+#                            if sim.Cns[ci][cn][0] == 1:
+#
+#                                u1 = sim.Cns[ci][cn][1]
+#                                u = busquedaDispositivouRLLC(u1, sim)
+#
+#                                if sim.Cns[ci][sim.kmax] == 1:
+#                                    Interferencias = calculoInterferenciauRLLC(u, sim)
+#                                else:
+#                                    Interferencias = 0
+#
+#                                R = sim.Cns[ci][sim.kmax] * sim.BW * mth.log2(1 + (((abs(sim.sortedListaUsuariosuRLLC[u][1]) ** 2) * (sim.sortedListaUsuariosuRLLC[u][3])) / ((sim.N0 * sim.BW) + Interferencias)))
+#                                sim.sortedListaUsuariosuRLLC[u][2] = R
+#
+#                            elif sim.Cns[ci][cn][0] == 2:
+#
+#                                m1 = sim.Cns[ci][cn][1]
+#                                m = busquedaDispositivomMTC(m1, sim)
+#
+#                                if sim.Cns[ci][sim.kmax] == 1:
+#                                    Interferencias = calculoInterferenciamMTC(m, sim)
+#                                else:
+#                                    Interferencias = 0
+#
+#                                R = sim.Cns[ci][sim.kmax] * sim.BW * mth.log2(1 + (((abs(
+#                                    sim.sortedListaUsuariosmMTC[m][1]) ** 2) * (sim.sortedListaUsuariosmMTC[m][3])) / ((sim.N0 * sim.BW) + Interferencias)))
+#                                sim.sortedListaUsuariosmMTC[m][2] = R
+#
+#                            Rtotal = Rtotal + R
+#                sim.Rates.append([Rtotal])
+#                # sim.Sac = sim.Sac + 1
+#                sim.Sv = sim.Sv + 1
+#                actualizarPotencias(c_, len(sim.Sac[c_]), sim)
 
-            for k in range(len(sim.Subportadoras), sim.S):
-                sim.Rates = []
+# Validación que las tasas de dispositivos URLLC esten satisfechas de acuerdo con un umbral Ruth
+def validacionTasasURLLC(sim):
+    for Ru in range(0, len(sim.sortedListaUsuariosuRLLC)):
+        if sim.sortedListaUsuariosuRLLC[Ru][2] < sim.Ruth:
+            return False
+    return True
 
-                for ci in range(0, len(sim.Cns)):
-                    Rtotal = 0
-                    if sim.Cns[ci]:
-                        for cn in range(0, sim.kmax):
-                            R = 0
-                            if sim.Cns[ci][cn][0] == 1:
-
-                                u1 = sim.Cns[ci][cn][1]
-                                u = busquedaDispositivouRLLC(u1, sim)
-
-                                if sim.Cns[ci][sim.kmax] == 1:
-                                    Interferencias = calculoInterferenciauRLLC(u, sim)
-                                else:
-                                    Interferencias = 0
-
-                                R = sim.Cns[ci][sim.kmax] * sim.BW * mth.log2(1 + (((abs(
-                                    sim.sortedListaUsuariosuRLLC[u][1]) ** 2) * (sim.sortedListaUsuariosuRLLC[u][
-                                    3])) / ((sim.N0 * sim.BW) + Interferencias)))
-                                sim.sortedListaUsuariosuRLLC[u][2] = R
-
-                            elif sim.Cns[ci][cn][0] == 2:
-
-                                m1 = sim.Cns[ci][cn][1]
-                                m = busquedaDispositivomMTC(m1, sim)
-
-                                if sim.Cns[ci][sim.kmax] == 1:
-                                    Interferencias = calculoInterferenciamMTC(m, sim)
-                                else:
-                                    Interferencias = 0
-
-                                R = sim.Cns[ci][sim.kmax] * sim.BW * mth.log2(1 + (((abs(
-                                    sim.sortedListaUsuariosmMTC[m][1]) ** 2) * (sim.sortedListaUsuariosmMTC[m][3])) / ((
-                                                                                                                                   sim.N0 * sim.BW) + Interferencias)))
-                                sim.sortedListaUsuariosmMTC[m][2] = R
-
-                            Rtotal = Rtotal + R
-                sim.Rates.append([Rtotal])
-                # sim.Sac = sim.Sac + 1
-                sim.Sv = sim.Sv + 1
-                actualizarPotencias(c_, len(sim.Sac[c_]), sim)
-
-
-
-
-
-
-def actualizarPotenciasT(sim):
-    for i in range (0,len(sim.sortedListaUsuariosuRLLC)):
-        sim.sortedListaUsuariosuRLLC[i][3] = sim.sortedListaUsuariosuRLLC[i][3] / (sim.Sac + 1)
-
-    for i in range (0,len(sim.sortedListaUsuariosmMTC)):
-        sim.sortedListaUsuariosmMTC[i][3] = sim.sortedListaUsuariosmMTC[i][3] / (sim.Sac + 1)
-
-
-def actualizarPotencias(cluster, Sac, sim):
-
-    for i in range (0, sim.kmax):
-        if sim.Cns[cluster][i][0] == 1:
-            a = busquedaDispositivouRLLC(sim.Cns[cluster][i][1], sim)
-            sim.sortedListaUsuariosuRLLC[a][3] = sim.sortedListaUsuariosuRLLC[a][3]/( Sac + 1 )
-
-        elif sim.Cns[cluster][i][0] == 2:
-            b = busquedaDispositivomMTC(sim.Cns[cluster][i][1], sim)
-            sim.sortedListaUsuariosmMTC[b][3] = sim.sortedListaUsuariosmMTC[b][3]/( Sac + 1 )
-
-
-def tasas_de_clusterNOMA(cluster, sim):
-
-    for i in range (0, sim.kmax):
-        if sim.Cns[cluster][i][0] == 1:
-            a = busquedaDispositivouRLLC(sim.Cns[cluster][i][1], sim)
-            R1 = sim.sortedListaUsuariosuRLLC[a][2]
-            sim.Ru = sim.Ru + R1
-
-        elif sim.Cns[cluster][i][0] == 2:
-            b = busquedaDispositivomMTC(sim.Cns[cluster][i][1], sim)
-            R2 = sim.sortedListaUsuariosmMTC[b][2]
-            sim.Rm = sim.Rm + R2
+# Validación que las tasas de dispositivos mMTC esten satisfechas de acuerdo con un umbral Rmth
+def validacionTasasmMTC(sim):
+    for Rm in range(0, len(sim.sortedListaUsuariosmMTC)):
+        if sim.sortedListaUsuariosmMTC[Rm][2] < sim.Rmth:
+            return False
+    return True
 
 
 def busquedaDispositivomMTC(m, sim):
@@ -381,15 +335,13 @@ def busquedaDispositivomMTC(m, sim):
             break
     return i
 
-
 def busquedaDispositivouRLLC(u, sim):
     for i in range(0,len(sim.sortedListaUsuariosuRLLC)):
         if sim.sortedListaUsuariosuRLLC[i][0] == u:
             break
     return i
 
-
-
+#Calcula la Interferencia de los dispositivos del grupo NOMA para un dispositivo URLLC
 def calculoInterferenciauRLLC(u,sim):
     Int1 = 0
     Int2 = 0
@@ -406,7 +358,9 @@ def calculoInterferenciauRLLC(u,sim):
     Int3 = Int1 + Int2
     return Int3
 
+#Calcula la Interferencia de los dispositivos del grupo NOMA para un dispositivo MTC
 def calculoInterferenciamMTC(m,sim):
+    # URLLC no interfieren a los mMTC, por que estos tienen rangos mas altos
     Int = 0
     for i in range(0, len(sim.sortedListaUsuariosmMTC)):
         if (sim.sortedListaUsuariosmMTC[i][6] > sim.sortedListaUsuariosmMTC[m][6]) and (sim.sortedListaUsuariosmMTC[m][5] == sim.sortedListaUsuariosmMTC[i][5]):
@@ -414,10 +368,37 @@ def calculoInterferenciamMTC(m,sim):
             Int = Int + I
     return Int
 
+def actualizarPotenciasT(sim):
+    for i in range (0,len(sim.sortedListaUsuariosuRLLC)):
+        sim.sortedListaUsuariosuRLLC[i][3] = sim.sortedListaUsuariosuRLLC[i][3] / (sim.Sac + 1)
+    for i in range (0,len(sim.sortedListaUsuariosmMTC)):
+        sim.sortedListaUsuariosmMTC[i][3] = sim.sortedListaUsuariosmMTC[i][3] / (sim.Sac + 1)
+
+def actualizarPotencias(cluster, Sac, sim):
+    for i in range (0, sim.kmax):
+        if sim.Cns[cluster][i][0] == 1:
+            a = busquedaDispositivouRLLC(sim.Cns[cluster][i][1], sim)
+            sim.sortedListaUsuariosuRLLC[a][3] = sim.sortedListaUsuariosuRLLC[a][3]/( Sac + 1 )
+        elif sim.Cns[cluster][i][0] == 2:
+            b = busquedaDispositivomMTC(sim.Cns[cluster][i][1], sim)
+            sim.sortedListaUsuariosmMTC[b][3] = sim.sortedListaUsuariosmMTC[b][3]/( Sac + 1 )
+
+def tasas_de_clusterNOMA(cluster, sim):
+    for i in range (0, sim.kmax):
+        if sim.Cns[cluster][i][0] == 1:
+            a = busquedaDispositivouRLLC(sim.Cns[cluster][i][1], sim)
+            R1 = sim.sortedListaUsuariosuRLLC[a][2]
+            sim.Ru = sim.Ru + R1
+        elif sim.Cns[cluster][i][0] == 2:
+            b = busquedaDispositivomMTC(sim.Cns[cluster][i][1], sim)
+            R2 = sim.sortedListaUsuariosmMTC[b][2]
+            sim.Rm = sim.Rm + R2
+
 
 sim = Simulacion()
+#radio de la celula
 sim.r_cell = 500
-sim.umbralArribos = 200 #192
-formacionUsuarios(sim, sim.umbralArribos)
+sim.umbralArribos = 200   #192 Usuarios para que no sobren usuarios
+formacionUsuarios(sim)
 algoritmoAgrupamiento(sim)
 algoritmoAsignacionRecursos(sim)
