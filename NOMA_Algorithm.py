@@ -98,56 +98,60 @@ def formacionUsuarios(sim):
         sim.ListaUsuariosmMTC.append([j, h, 0, .2, False, 0, 0, 0])
 
     # Ordenamiento de dispositivos basada en su ganancia de canal promedio(descendentemente)
-    sim.sortedListaUsuariosmMTC = sorted(sim.ListaUsuariosmMTC, key=operator.itemgetter(1), reverse=True)
-    sim.sortedListaUsuariosuRLLC = sorted(sim.ListaUsuariosuRLLC, key=operator.itemgetter(1), reverse=True)
+    L1 = sorted(sim.ListaUsuariosmMTC, key=operator.itemgetter(1), reverse=True)
+    sim.sortedListaUsuariosmMTC = L1
+    L2 = sorted(sim.ListaUsuariosuRLLC, key=operator.itemgetter(1), reverse=True)
+    sim.sortedListaUsuariosuRLLC = L2
 
 
 # Algoritmo para el agrupamiento de dispositivos (clustering NOMA)
 
 # Se empiezan a agrupar usuarios con una alta ganancia de canal promedio,
 # en la recepción tipo SIC se decodifican primero los usuarios con una alta ganancia de canal promedio antes que los de baja ganancia  de canal promedio
-# es por esto que los rangos de los dispositivos uRLLC deben ser menores que los MTC para que sea eficiente la decodificación SIC
+# Los rangos de los dispositivos uRLLC deben ser menores que los MTC para que sea eficiente la decodificación SIC
 
 def algoritmoAgrupamiento(sim):
     # j es la última posición de asignación de usuarios URLLC
     j = 0
-    #AGRUPAMIENTO DE USUARIOS URLLC
-    #Solo para grupos de 4 usuarios
+    # AGRUPAMIENTO DE USUARIOS URLLC
+    # Solo para grupos de 4 usuarios
     for i in range(0, int(sim.U)):
-        #i corresponde al número de dispositivos uRLLC [U]
+        # i corresponde al número de dispositivos uRLLC [U]
+
         if i < sim.C:
             # Asignar los dispositivos uRLLC a rangos bajos de los primeros grupos
             # Lista de grupos NOMA: [tipo_dispositivo, ID_dispositivo]
             # donde tipo_dispositivo =1 URLLC, tipo_dispositivo =2 MTC
-            sim.NOMA_clusters.append([1, sim.sortedListaUsuariosuRLLC[i][0]])
+            sim.NOMA_clusters.append([[1, sim.sortedListaUsuariosuRLLC[i][0]], False, False, False])
             sim.sortedListaUsuariosuRLLC[i][5] = i
             sim.sortedListaUsuariosuRLLC[i][6] = 0
             sim.sortedListaUsuariosuRLLC[i][4] = True
-        # Si el número de dispositivos uRLLC [U] es mayor que el numero de grupos NOMA [C], los dispositivos sobrantes
-        # serán asignados a los siguientes rangos del grupo
+
         else:
-            # Asignar los dispositivos uRLLC a los siguientes rangos del grupo
+            # Si el número de dispositivos uRLLC [U] es mayor que el numero de grupos NOMA [C], los dispositivos sobrantes
+            # serán asignados a los siguientes rangos del grupo
             sim.NOMA_clusters[j][1] = [1, sim.sortedListaUsuariosuRLLC[i][0]]
             sim.sortedListaUsuariosuRLLC[i][5] = j
             sim.sortedListaUsuariosuRLLC[i][6] = 1
             sim.sortedListaUsuariosuRLLC[i][4] = True
             j = j + 1
 
-    #print('Indice j quedó en', j)
+    # print('Indice j quedó en', j)
     sim.cerosEliminar = j
-    #sim.NOMA_clusters[j][1]
+    # sim.NOMA_clusters[j][1]
 
     w=0
     x=0
+
     #Agregar ceros a lista
-    for g in range(0, j):
+    for g in range(0,j):
         sim.sortedListaUsuariosmMTC.insert(0, 0)
 
-    #AGRUPAMIENTO DE USUARIOS MTC
+    # AGRUPAMIENTO DE USUARIOS mMTC
+    # Solo para grupos de 4 usuarios
     for i in range(j, int(sim.M)):
         # Si el número de dispositivos mMTC [M] es mayor que el numero de grupos NOMA [C], los dispositivos sobrantes
-        # serán asignados a los siguientes rangos del grupo
-        # Ultima posición de asignación
+        # serán asignados a los siguientes rangos del grupo, última posición de asignación
 
         if i < (sim.C):
             # Asignar los dispositivos mmtc a los rangos mas bajos de los primeros grupos
@@ -160,7 +164,7 @@ def algoritmoAgrupamiento(sim):
             j = j + 1
 
         elif i < (2*sim.C):
-            # Asignar los dispositivos uRLLC a los siguientes rangos del grupo
+            # Asignar los dispositivos mMTC a los siguientes rangos del grupo
             sim.NOMA_clusters[w][2] = [2, sim.sortedListaUsuariosmMTC[i][0]]
             sim.sortedListaUsuariosmMTC[i][5] = w
             sim.sortedListaUsuariosmMTC[i][6] = 2
@@ -168,7 +172,7 @@ def algoritmoAgrupamiento(sim):
             w = w + 1
 
         elif i < (3*sim.C):
-            # Asignar los dispositivos uRLLC a los siguientes rangos del grupo
+            # Asignar los dispositivos mMTC a los siguientes rangos del grupo
             sim.NOMA_clusters[x][3] = [2, sim.sortedListaUsuariosmMTC[i][0]]
             sim.sortedListaUsuariosmMTC[i][5] = x
             sim.sortedListaUsuariosmMTC[i][6] = 3
@@ -177,8 +181,8 @@ def algoritmoAgrupamiento(sim):
 
         else:
             #print('Se asignaron',i, 'usuarios y eran ', sim.M, ' usuarios tipo maquina MTC' )
-            break
-    #Eliminar ceros que se agregaron a lista
+            break;
+    # Eliminar ceros que se agregaron a lista
     del sim.sortedListaUsuariosmMTC[0:sim.cerosEliminar]
 
 
@@ -192,7 +196,7 @@ def algoritmoAsignacionRecursos(sim):
     sim.Cns = copy.deepcopy(sim.NOMA_clusters)
     # Se agrega una columna a cada cluster para
     for i in range(0, len(sim.Cns)):
-        sim.Cns[i].append(0)
+        sim.Cns[i].append(1)
     #Mejor cluster que maximiza la tasa (C*)
     c_ = []
     #Tasas a satisfacer para dispositivos URLLC y mMTC
@@ -203,9 +207,9 @@ def algoritmoAsignacionRecursos(sim):
         condicion1 = validacionTasasURLLC(sim)
         condicion2 = validacionTasasmMTC(sim)
 
-        if((len(sim.Subportadoras) == 48) and (condicion1) and (condicion2)):
+        if (len(sim.Subportadoras) == 48) and (condicion1) and (condicion2):
             break
-        sim.Rates = []
+
         #For para recorrer los 48 grupos no asignados de Cns
         for ci in range(0, len(sim.Cns)):
             #RTotal acumula las tasas de cada dispositivo por grupo y asi obtener la tasa alcanzada por grupo
@@ -317,14 +321,14 @@ def algoritmoAsignacionRecursos(sim):
 # Validación que las tasas de dispositivos URLLC esten satisfechas de acuerdo con un umbral Ruth
 def validacionTasasURLLC(sim):
     for Ru in range(0, len(sim.sortedListaUsuariosuRLLC)):
-        if sim.sortedListaUsuariosuRLLC[Ru][2] < sim.Ruth:
+        if ((sim.sortedListaUsuariosuRLLC[Ru][2]) < (sim.Ruth)):
             return False
     return True
 
 # Validación que las tasas de dispositivos mMTC esten satisfechas de acuerdo con un umbral Rmth
 def validacionTasasmMTC(sim):
     for Rm in range(0, len(sim.sortedListaUsuariosmMTC)):
-        if sim.sortedListaUsuariosmMTC[Rm][2] < sim.Rmth:
+        if ((sim.sortedListaUsuariosmMTC[Rm][2]) < (sim.Rmth)):
             return False
     return True
 
